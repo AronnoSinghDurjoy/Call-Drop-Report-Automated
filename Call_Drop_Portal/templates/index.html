@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teletalk Report Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #1a1a1a;
+            --secondary-dark: #2a2a2a;
+            --accent-orange: #ff6b35;
+            --accent-blue: #4a90e2;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --text-light: #ffffff;
+            --text-muted: #bdc3c7;
+            --border-color: #404040;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(74, 144, 226, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(46, 204, 113, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+       .header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between; /* ✅ correct! */
+    align-items: center;
+}
+
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--accent-orange);
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .status-indicator.inactive {
+            border-color: var(--accent-red);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.active {
+            background: var(--accent-green);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-blue));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title i {
+            color: var(--accent-orange);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), #27ae60);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent-red), #c0392b);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary-dark);
+            border-color: var(--accent-blue);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-green);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Email List */
+        .email-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .email-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .email-item:hover {
+            background: var(--secondary-dark);
+            border-color: var(--accent-blue);
+        }
+
+        .email-info {
+            flex: 1;
+        }
+
+        .email-address {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .email-name {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .email-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        /* Report Generation */
+        .report-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-orange);
+        }
+
+        /* Logs Table */
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--glass-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .logs-table th,
+        .logs-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logs-table th {
+            background: var(--secondary-dark);
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .logs-table tr:hover {
+            background: var(--secondary-dark);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.success {
+            background: rgba(46, 204, 113, 0.2);
+            color: var(--accent-green);
+        }
+
+        .status-badge.failed {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--accent-red);
+        }
+
+        .status-badge.too-large {
+            background: rgba(255, 107, 53, 0.2);
+            color: var(--accent-orange);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--glass-border);
+            border-radius: 50%;
+            border-top-color: var(--accent-orange);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--accent-red);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+   <div class="header">
+    <div class="header-content">
+        <div class="logo">
+    <img src="{{ url_for('static', filename='teletalk.png') }}" alt="Teletalk Logo" class="logo-img">
+    <h1>Teletalk Report Generator</h1>
+</div>
+        <div class="status-indicator" id="schedulerStatus">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Scheduler Inactive</span>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Scheduler Control -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-clock"></i>
+                        Scheduler Control
+                    </h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Schedule Settings</label>
+                    <div class="form-row">
+                        <div>
+                            <label class="form-label">Run Day</label>
+                            <select class="form-control" id="runDay">
+                                <option value="3">3rd of each month</option>
+                                <option value="1">1st of each month</option>
+                                <option value="15">15th of each month</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Run Time</label>
+                            <input type="time" class="form-control" id="runTime" value="09:00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button class="btn btn-success" id="startScheduler">
+                            <i class="fas fa-play"></i>
+                            Start Scheduler
+                        </button>
+                        <button class="btn btn-danger" id="stopScheduler">
+                            <i class="fas fa-stop"></i>
+                            Stop Scheduler
+                        </button>
+                    </div>
+                </div>
+
+                <div id="schedulerInfo" class="form-group">
+                    <label class="form-label">Scheduler Information</label>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;">
+                        <div>Last Run: <span id="lastRun">Never</span></div>
+                        <div>Next Run: <span id="nextRun">Not scheduled</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-envelope"></i>
+                        Email Recipients
+                    </h2>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-row">
+                        <div>
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="emailInput" placeholder="Enter email address">
+                        </div>
+                        <div>
+                            <label class="form-label">Name (Optional)</label>
+                            <input type="text" class="form-control" id="nameInput" placeholder="Enter name">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="addEmail" style="margin-top: 1rem;">
+                        <i class="fas fa-plus"></i>
+                        Add Email
+                    </button>
+                </div>
+
+                <div class="email-list" id="emailList">
+                    <!-- Email items will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Report Generation -->
+        <div class="card full-width">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-file-download"></i>
+                    Manual Report Generation
+                </h2>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Report Types</label>
+                <div class="report-options">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="offNetReport" value="off_net" checked>
+                        <label for="offNetReport">Off Net Call Drop Report</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="onNetReport" value="on_net" checked>
+                        <label for="onNetReport">On Net Call Drop Report</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="dayWiseReport" value="day_wise" checked>
+                        <label for="dayWiseReport">Day Wise Call Drop Report</label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="generateReport">
+                <i class="fas fa-cog"></i>
+                Generate & Send Reports
+            </button>
+        </div>
+
+        <!-- Report Logs -->
+        <div class="card full-width">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-history"></i>
+                    Report Logs
+                </h2>
+                <button class="btn btn-secondary" id="refreshLogs">
+                    <i class="fas fa-refresh"></i>
+                    Refresh
+                </button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Report Type</th>
+                            <th>Period</th>
+                            <th>Status</th>
+                            <th>File Size</th>
+                            <th>Recipients</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <!-- Logs will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div id="toastMessage"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let emails = [];
+        let schedulerStatus = {};
+        let isLoading = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmails();
+            loadSchedulerStatus();
+            loadReportLogs();
+            setupEventListeners();
+            setDefaultDates();
+        });
+
+        // Set default dates to previous month
+        function setDefaultDates() {
+            const today = new Date();
+            const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDayPrevMonth = new Date(firstDayThisMonth.getTime() - 24 * 60 * 60 * 1000);
+            const firstDayPrevMonth = new Date(lastDayPrevMonth.getFullYear(), lastDayPrevMonth.getMonth(), 1);
+
+            document.getElementById('startDate').value = firstDayPrevMonth.toISOString().split('T')[0];
+            document.getElementById('endDate').value = lastDayPrevMonth.toISOString().split('T')[0];
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('addEmail').addEventListener('click', addEmail);
+            document.getElementById('startScheduler').addEventListener('click', startScheduler);
+            document.getElementById('stopScheduler').addEventListener('click', stopScheduler);
+            document.getElementById('generateReport').addEventListener('click', generateReport);
+            document.getElementById('refreshLogs').addEventListener('click', loadReportLogs);
+
+            // Update scheduler config when changed
+            document.getElementById('runDay').addEventListener('change', updateSchedulerConfig);
+            document.getElementById('runTime').addEventListener('change', updateSchedulerConfig);
+        }
+
+        // API helper function
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            toastMessage.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Load emails
+        async function loadEmails() {
+            try {
+                const data = await apiCall('/api/emails');
+                emails = data;
+                renderEmails();
+            } catch (error) {
+                showToast('Failed to load emails', 'error');
+            }
+        }
+
+        // Render emails
+        function renderEmails() {
+            const emailList = document.getElementById('emailList');
+            emailList.innerHTML = '';
+
+            emails.forEach(email => {
+                const emailItem = document.createElement('div');
+                emailItem.className = 'email-item';
+                emailItem.innerHTML = `
+                    <div class="email-info">
+                        <div class="email-address">${email.email}</div>
+                        <div class="email-name">${email.name || 'No name'}</div>
+                    </div>
+                    <div class="email-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="toggleEmail(${email.id})">
+                            <i class="fas fa-${email.is_active ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmail(${email.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+
+                if (!email.is_active) {
+                    emailItem.style.opacity = '0.5';
+                }
+
+                emailList.appendChild(emailItem);
+            });
+        }
+
+        // Add email
+        async function addEmail() {
+            const emailInput = document.getElementById('emailInput');
+            const nameInput = document.getElementById('nameInput');
+
+            const email = emailInput.value.trim();
+            const name = nameInput.value.trim();
+
+            if (!email) {
+                showToast('Please enter an email address', 'error');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                showToast('Please enter a valid email address', 'error');
+                return;
+            }
+
+            try {
+                await apiCall('/api/emails', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, name })
+                });
+
+                emailInput.value = '';
+                nameInput.value = '';
+                loadEmails();
+                showToast('Email added successfully');
+            } catch (error) {
+                showToast('Failed to add email', 'error');
+            }
+        }
+
+        // Delete email
+        async function deleteEmail(id) {
+            if (!confirm('Are you sure you want to delete this email?')) {
+                return;
+            }
+
+            try {
+                await apiCall(`/api/emails/${id}`, { method: 'DELETE' });
+                loadEmails();
+                showToast('Email deleted successfully');
+            } catch (error) {
+                showToast('Failed to delete email', 'error');
+            }
+        }
+
+        // Toggle email active status
+        async function toggleEmail(id) {
+            try {
+                await apiCall(`/api/emails/${id}/toggle`, { method: 'POST' });
+                loadEmails();
+                showToast('Email status updated');
+            } catch (error) {
+                showToast('Failed to update email status', 'error');
+            }
+        }
+
+        // Load scheduler status
+        async function loadSchedulerStatus() {
+            try {
+                const data = await apiCall('/api/scheduler');
+                schedulerStatus = data;
+                updateSchedulerUI();
+            } catch (error) {
+                showToast('Failed to load scheduler status', 'error');
+            }
+        }
+
+        // Update scheduler UI
+        function updateSchedulerUI() {
+            const statusIndicator = document.getElementById('schedulerStatus');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const lastRun = document.getElementById('lastRun');
+            const nextRun = document.getElementById('nextRun');
+
+            if (schedulerStatus.is_active) {
+                statusIndicator.classList.add('active');
+                statusIndicator.classList.remove('inactive');
+                statusDot.classList.add('active');
+                statusText.textContent = 'Scheduler Active';
+            } else {
+                statusIndicator.classList.add('inactive');
+                statusIndicator.classList.remove('active');
+                statusDot.classList.remove('active');
+                statusText.textContent = 'Scheduler Inactive';
+            }
+
+            lastRun.textContent = schedulerStatus.last_run ?
+                new Date(schedulerStatus.last_run).toLocaleString() : 'Never';
+            nextRun.textContent = schedulerStatus.next_run ?
+                new Date(schedulerStatus.next_run).toLocaleString() : 'Not scheduled';
+
+            // Update form fields
+            document.getElementById('runDay').value = schedulerStatus.run_day;
+            document.getElementById('runTime').value =
+                `${schedulerStatus.run_hour.toString().padStart(2, '0')}:${schedulerStatus.run_minute.toString().padStart(2, '0')}`;
+        }
+
+        // Start scheduler
+        async function startScheduler() {
+            if (isLoading) return;
+
+            try {
+                isLoading = true;
+                document.getElementById('startScheduler').innerHTML = '<div class="loading"></div> Starting...';
+
+                await apiCall('/api/scheduler/start', { method: 'POST' });
+                loadSchedulerStatus();
+                showToast('Scheduler started successfully');
+            } catch (error) {
+                showToast('Failed to start scheduler', 'error');
+            } finally {
+                isLoading = false;
+                document.getElementById('startScheduler').innerHTML = '<i class="fas fa-play"></i> Start Scheduler';
+            }
+        }
+
+        // Stop scheduler
+        async function stopScheduler() {
+            if (isLoading) return;
+
+            try {
+                isLoading = true;
+                document.getElementById('stopScheduler').innerHTML = '<div class="loading"></div> Stopping...';
+
+                await apiCall('/api/scheduler/stop', { method: 'POST' });
+                loadSchedulerStatus();
+                showToast('Scheduler stopped successfully');
+            } catch (error) {
+                showToast('Failed to stop scheduler', 'error');
+            } finally {
+                isLoading = false;
+                document.getElementById('stopScheduler').innerHTML = '<i class="fas fa-stop"></i> Stop Scheduler';
+            }
+        }
+
+        // Update scheduler config
+        async function updateSchedulerConfig() {
+            const runDay = document.getElementById('runDay').value;
+            const runTime = document.getElementById('runTime').value;
+            const [hour, minute] = runTime.split(':');
+
+            try {
+                await apiCall('/api/scheduler/config', {
+                                       method: 'POST',
+                    body: JSON.stringify({
+                        run_day: parseInt(runDay),
+                        run_hour: parseInt(hour),
+                        run_minute: parseInt(minute)
+                    })
+                });
+
+                showToast('Scheduler configuration updated');
+                loadSchedulerStatus();
+            } catch (error) {
+                showToast('Failed to update scheduler configuration', 'error');
+            }
+        }
+
+        // Generate and send reports manually
+        async function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const offNet = document.getElementById('offNetReport').checked;
+            const onNet = document.getElementById('onNetReport').checked;
+            const dayWise = document.getElementById('dayWiseReport').checked;
+
+            if (!startDate || !endDate) {
+                showToast('Please select a valid date range', 'error');
+                return;
+            }
+
+            if (!offNet && !onNet && !dayWise) {
+                showToast('Please select at least one report type', 'error');
+                return;
+            }
+
+            try {
+                isLoading = true;
+                document.getElementById('generateReport').innerHTML = '<div class="loading"></div> Generating...';
+
+                await apiCall('/api/reports/generate', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        start_date: startDate,
+                        end_date: endDate,
+                        reports: {
+                            off_net: offNet,
+                            on_net: onNet,
+                            day_wise: dayWise
+                        }
+                    })
+                });
+
+                showToast('Report generated and sent successfully');
+                loadReportLogs();
+            } catch (error) {
+                showToast('Failed to generate report', 'error');
+            } finally {
+                isLoading = false;
+                document.getElementById('generateReport').innerHTML = '<i class="fas fa-cog"></i> Generate & Send Reports';
+            }
+        }
+
+        // Load report logs
+        async function loadReportLogs() {
+            try {
+                const logs = await apiCall('/api/reports/logs');
+                const logsTableBody = document.getElementById('logsTableBody');
+                logsTableBody.innerHTML = '';
+
+                logs.forEach(log => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(log.date).toLocaleDateString()}</td>
+                        <td>${log.report_type}</td>
+                        <td>${log.period}</td>
+                        <td><span class="status-badge ${log.status}">${log.status.toUpperCase()}</span></td>
+                        <td>${log.file_size} MB</td>
+                        <td>${log.recipients.join(', ')}</td>
+                    `;
+                    logsTableBody.appendChild(row);
+                });
+
+            } catch (error) {
+                showToast('Failed to load report logs', 'error');
+            }
+        }
+
+        // Simple email validation
+        function isValidEmail(email) {
+            const re = /^[^@]+@[^@]+\.[^@]+$/;
+            return re.test(email.toLowerCase());
+        }
+    </script>
+</body>
+</html>
